@@ -94,6 +94,9 @@ local function adoptAseColor(dlg, aseColor)
         aseColor.blue,
         aseColor.alpha)
 
+    -- TODO: Reciprocity problem: Where getting a color
+    -- from the wheel created by the same channel values
+    -- is one less than it should be.
     dlg:modify { id = "redChannel", value = rNew }
     dlg:modify { id = "greenChannel", value = gNew }
     dlg:modify { id = "blueChannel", value = bNew }
