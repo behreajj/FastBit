@@ -356,7 +356,6 @@ dlg:button {
             local atan2 = math.atan
             local deg = math.deg
             local sqrt = math.sqrt
-            local rt_2 = 1.4142135623730951
             for i = 0, frameCount - 1, 1 do
                 local cel = cels[i + 1]
                 local image = Image(width, height)
@@ -375,7 +374,7 @@ dlg:button {
                     if magSq > 0.000001 and magSq <= 1.0 then
                         local angleRad = atan2(ySgn, xSgn)
                         local angleDeg = deg(angleRad) % 360.0
-                        local sat = sqrt(magSq * rt_2)
+                        local sat = sqrt(magSq)
                         local aseColor = Color {
                             h = angleDeg,
                             s = sat,
