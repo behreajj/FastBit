@@ -9,22 +9,28 @@
 
 ## Introduction
 
-This is a fork of [WolftrooperNo86](https://github.com/WolftrooperNo86)'s [FastBit](https://github.com/WolftrooperNo86/FastBit) Lua script for [Aseprite](https://www.aseprite.org/), a pixel art editor. For general information on how to install a script in Aseprite, see [the documentation](https://www.aseprite.org/docs/scripting/). For discussion about the original script in the Aseprite community forum, see this [thread](https://community.aseprite.org/t/script-fastbit-color-picker-v1-2/5687).
+This is a fork of [WolftrooperNo86](https://github.com/WolftrooperNo86)'s [FastBit](https://github.com/WolftrooperNo86/FastBit) Lua script for [Aseprite](https://www.aseprite.org/), a pixel art editor. For general information on how to install a script in Aseprite, see [the documentation](https://www.aseprite.org/docs/scripting/); for the scripting API, see this [Github repo](https://github.com/aseprite/api). For discussion about the original script in the Aseprite community forum, see this [thread](https://community.aseprite.org/t/script-fastbit-color-picker-v1-2/5687).
+
+_This script was tested in Aseprite version 1.3-beta-5._
 
 ![Screen Capture](screenCap.png)
 
 I have refactored the code for general readability and maintainability.
 
-Color bit-depth can now be changed without separate dialog windows. Independent control over bit-depth for each color channel is not supported at present. However, the alpha channel can now be edited.
+Color bit-depth can now be changed without separate dialog windows. There are no plans to support uniform control over RGB bit-depth.
 
 Foreground and background colors are no longer automatically updated by the dialog; this is less convenient, but it is done to avoid overwriting color entries in unlocked palettes. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code.
 
-As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+C` closes the dialog.
+As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+W` creates a new sprite with a color wheel; `Alt+C` closes the dialog.
+
+The color wheel is not guaranteed to give you every color available for the selected channel bit-depths. The palette assigned to the sprite containing the color wheel is clamped to 256 maximum. The number of frames to animate the increase in lightness of the color wheel is based on the maximum bit-depth for red, green and blue channels.
 
 I am still researching the proper expansions from low bit to standard RGB. The tables below are diagnostic print-outs for both myself and for interested readers to compare this script's outputs against other standards and palettes. The one, seven and eight bit tables are omitted. I count the number of bits per _one_ color channel, so readers may need to multiply by three to match other naming conventions. For example, "five bits" would be "fifteen bit RGB."
 
 ## Two Bits
 `2 ^ 2 = 4`, `1 << 2 = 4`
+
+![Bit 2](bit2.png)
 
 [https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#6-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#6-bit_RGB)*
 
@@ -39,6 +45,8 @@ Step|Decimal|Hex
 
 ## Three Bits
 `2 ^ 3 = 8`, `1 << 3 = 8`
+
+![Bit 3](bit3.png)
 
 [https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#9-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#9-bit_RGB)
 
@@ -55,6 +63,8 @@ Step|Decimal|Hex|Diff|
 
 ## Four Bits
 `2 ^ 4 = 16`, `1 << 4 = 16`
+
+![Bit 4](bit4.png)
 
 [https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#12-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#12-bit_RGB)
 
@@ -80,7 +90,9 @@ Step|Decimal|Hex|
 ## Five Bits
 `2 ^ 5 = 32`, `1 << 5 = 32`
 
-[https://www.wikiwand.com/en/List_of_monochrome_and_RGB_color_formats#/15-bit_RGB](https://www.wikiwand.com/en/List_of_monochrome_and_RGB_color_formats#/15-bit_RGB)*
+![Bit 5](bit5.png)
+
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#15-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#15-bit_RGB)*
 
 Step|Decimal|Hex|Diff|
 ---:|------:|--:|---:|
@@ -121,6 +133,8 @@ Step|Decimal|Hex|Diff|
 
 ## Six Bits
 `2 ^ 6 = 64`, `1 << 6 = 64`
+
+![Bit 6](bit6.png)
 
 [https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#18-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#18-bit_RGB)
 
