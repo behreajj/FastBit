@@ -19,7 +19,7 @@ local function expandColorTo256(
     ase.red = r * 255 // ((1 << rDepth) - 1)
     ase.green = g * 255 // ((1 << gDepth) - 1)
     ase.blue = b * 255 // ((1 << bDepth) - 1)
-    ase.alpha = a * 255 / ((1 << aDepth) - 1)
+    ase.alpha = a * 255 // ((1 << aDepth) - 1)
 
     return ase
 end
@@ -27,7 +27,8 @@ end
 local function saturate(cn, co, mxNew, mxPrev)
     -- co & 1 == 0 tests for even or odd, like co % 2.
     if cn > 0 and cn < mxNew and co & 1 == 0 then
-        return cn + mxNew // mxPrev
+        -- return cn + mxNew // mxPrev
+        return cn + 1
     else
         return cn
     end
@@ -36,11 +37,10 @@ end
 local function contract256Channel(cDepth, cOld)
     local cNew = cOld
     if cDepth < 2 then
-        if cOld < 127.5 then cNew = 0 else cNew = 1 end
+        if cOld < 128 then cNew = 0 else cNew = 1 end
     elseif cDepth < 8 then
-        local rmx = (1 << cDepth) - 1
-        cNew = rmx * cNew // 255
-        cNew = saturate(cNew, cOld, rmx, 255)
+        local cMax = (1 << cDepth) - 1
+        cNew = math.ceil(cMax * cNew * 0.00392156862745098)
     end
     return cNew
 end
@@ -330,7 +330,7 @@ dlg:button {
         local bDepth = args.blueDepth
         local aDepth = args.alphaDepth
         local maxDepth = math.max(rDepth, gDepth, bDepth)
-        local frameCount = 1 << maxDepth
+        local frameCount = 1 + (1 << maxDepth)
 
         local width = 256
         local height = 256
