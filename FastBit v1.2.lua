@@ -1,1709 +1,329 @@
---> Variables <--
-local rStep = 0.0000000000
+--A fork of the original FastBit by WolftrooperNo86
+--https://github.com/WolftrooperNo86/FastBit
+--licensed under GNU General Public License v3.0.
 
-local gStep = 0.0000000000
-
-local bStep = 0.0000000000
-
-local colSel = 1
-
-local lockState = 1
-
-local dlgSetup = Dialog{ title = "FastBit - Setup" }
-
-local dlgRGB = Dialog{ title = "FastBit" }
-
-
-
---> Get sprite <--
-actSpr = app.activeSprite
-
-if not actSpr then
-
-	return app.alert{
-
-		title = "FastBit",
-
-		text = {
-
-			"ERROR: No sprites open!",
-
-			"FIX: Open a sprite, then re-run FastBit."
-
-		}
-	
-	}
-
+local function saturate(cn, co, mxNew, mxPrev)
+    -- co & 1 == 0 tests for even or odd, like co % 2.
+    if cn > 0 and cn < mxNew and co & 1 == 0 then
+        return cn + mxNew // mxPrev
+    else
+        return cn
+    end
 end
 
+local function recalcColor(bd, r, g, b, a, constrainAlpha, aseColor)
+    local ase = aseColor or Color(0, 0, 0, 0)
 
+    local mx = (1 << bd) - 1
+    ase.red = r * 255 // mx
+    ase.green = g * 255 // mx
+    ase.blue = b * 255 // mx
 
---> Get color mode <--
-colMode = actSpr.colorMode
+    if constrainAlpha then
+        ase.alpha = a * 255 // mx
+    else
+        ase.alpha = a
+    end
 
-if colMode == 1 then
-
-	return app.alert{
-	
-		title = "FastBit",
-		
-		text = {
-		
-			"ERROR: Sprite is in greyscale mode!",
-			
-			"FIX: Set sprite to index or RGB mode, the re-run FastBit"
-		
-		}
-	}
-
+    return ase
 end
 
-
-
---> Get palette <--
-actPal = actSpr.palettes[ 1 ]
-
-
-
---.---------------.--
---| .-----------. |--
---| | FUNCTIONS | |--
---| '-----------' |--
---'---------------'--
-
-
-
-		------------------
--------> Set fg/bg colors <-------
-		------------------
-function setColors( thisDlg )
-
-	local dlgData = thisDlg.data
-
-	if colSel == 1 then
-
-		if lockState == 0 then
-
-			actPal:setColor( app.fgColor.index, Color{ r = math.ceil( ( dlgData.r0 + dlgData.r1 + dlgData.r2 + dlgData.r3 + dlgData.r4 + dlgData.r5 + dlgData.r6 + dlgData.r7 + dlgData.r8 ) * rStep ), g = math.ceil( ( dlgData.g0 + dlgData.g1 + dlgData.g2 + dlgData.g3 + dlgData.g4 + dlgData.g5 + dlgData.g6 + dlgData.g7 + dlgData.g8 ) * gStep ), b =  math.ceil( ( dlgData.b0 + dlgData.b1 + dlgData.b2 + dlgData.b3 + dlgData.b4 + dlgData.b5 + dlgData.b6 + dlgData.b7 + dlgData.b8 ) * bStep ) } )
-
-		end
-
-		app.fgColor = Color{ r = math.ceil( ( dlgData.r0 + dlgData.r1 + dlgData.r2 + dlgData.r3 + dlgData.r4 + dlgData.r5 + dlgData.r6 + dlgData.r7 + dlgData.r8 ) * rStep ), g = math.ceil( ( dlgData.g0 + dlgData.g1 + dlgData.g2 + dlgData.g3 + dlgData.g4 + dlgData.g5 + dlgData.g6 + dlgData.g7 + dlgData.g8 ) * gStep ), b =  math.ceil( ( dlgData.b0 + dlgData.b1 + dlgData.b2 + dlgData.b3 + dlgData.b4 + dlgData.b5 + dlgData.b6 + dlgData.b7 + dlgData.b8 ) * bStep ) }
-
-	elseif colSel == 0 then
-
-		if lockState == 0 then
-
-			actPal:setColor( app.bgColor.index, Color{ r = math.ceil( ( dlgData.r0 + dlgData.r1 + dlgData.r2 + dlgData.r3 + dlgData.r4 + dlgData.r5 + dlgData.r6 + dlgData.r7 + dlgData.r8 ) * rStep ), g = math.ceil( ( dlgData.g0 + dlgData.g1 + dlgData.g2 + dlgData.g3 + dlgData.g4 + dlgData.g5 + dlgData.g6 + dlgData.g7 + dlgData.g8 ) * gStep ), b =  math.ceil( ( dlgData.b0 + dlgData.b1 + dlgData.b2 + dlgData.b3 + dlgData.b4 + dlgData.b5 + dlgData.b6 + dlgData.b7 + dlgData.b8 ) * bStep ) } )
-
-		end
-
-		app.bgColor = Color{ r = math.ceil( ( dlgData.r0 + dlgData.r1 + dlgData.r2 + dlgData.r3 + dlgData.r4 + dlgData.r5 + dlgData.r6 + dlgData.r7 + dlgData.r8 ) * rStep ), g = math.ceil( ( dlgData.g0 + dlgData.g1 + dlgData.g2 + dlgData.g3 + dlgData.g4 + dlgData.g5 + dlgData.g6 + dlgData.g7 + dlgData.g8 ) * gStep ), b =  math.ceil( ( dlgData.b0 + dlgData.b1 + dlgData.b2 + dlgData.b3 + dlgData.b4 + dlgData.b5 + dlgData.b6 + dlgData.b7 + dlgData.b8 ) * bStep ) }
-
-	end
-
+local function colorToHexWeb(aseColor)
+    return string.format("%06x",
+        aseColor.red << 0x10
+        | aseColor.green << 0x08
+        | aseColor.blue)
 end
 
-
-
-		------------------
--------> Get fg/bg colors <-------
-		------------------
-function getColors( inCol, thisDlg, thatDlg )
-
-	local dlgData = thisDlg.data
-
-
-		----------------
--------> RED slider set <-------
-		----------------
-	if thatDlg.data.rDepth == 8 then
-
-		dlgData.r8 = inCol.red
-
-	elseif thatDlg.data.rDepth == 7 then
-
-		dlgData.r7 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 6 then
-
-		dlgData.r6 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 5 then
-
-		dlgData.r5 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 4 then
-
-		dlgData.r4 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 3 then
-
-		dlgData.r3 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 2 then
-
-		dlgData.r2 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 1 then
-
-		dlgData.r1 = math.floor( inCol.red / rStep )
-
-	elseif thatDlg.data.rDepth == 0 then
-
-		dlgData.r0 = 0
-
-	end
-
-
-
-		------------------
--------> GREEN slider set <-------
-		------------------
-	if thatDlg.data.gDepth == 8 then
-
-		dlgData.g8 = inCol.green
-
-	elseif thatDlg.data.gDepth == 7 then
-
-		dlgData.g7 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 6 then
-
-		dlgData.g6 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 5 then
-
-		dlgData.g5 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 4 then
-
-		dlgData.g4 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 3 then
-
-		dlgData.g3 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 2 then
-
-		dlgData.g2 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 1 then
-
-		dlgData.g1 = math.floor( inCol.green / gStep )
-
-	elseif thatDlg.data.gDepth == 0 then
-
-		dlgData.g0 = 0
-
-	end
-
-
-
-		-----------------
--------> BLUE slider set <-------
-		-----------------
-	if thatDlg.data.bDepth == 8 then
-
-		dlgData.b8 = inCol.blue
-
-	elseif thatDlg.data.bDepth == 7 then
-
-		dlgData.b7 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 6 then
-
-		dlgData.b6 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 5 then
-
-		dlgData.b5 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 4 then
-
-		dlgData.b4 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 3 then
-
-		dlgData.b3 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 2 then
-
-		dlgData.b2 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 1 then
-
-		dlgData.b1 = math.floor( inCol.blue / bStep )
-
-	elseif thatDlg.data.bDepth == 0 then
-
-		dlgData.b0 = 0
-
-	end
-
-
-
-	thisDlg.data = dlgData
-
+local function updatePreview(dlg)
+    local args = dlg.data
+    local newClr = recalcColor(
+            args.bitDepth,
+            args.redChannel,
+            args.greenChannel,
+            args.blueChannel,
+            args.alphaChannel,
+            args.constrainAlpha)
+
+    dlg:modify {
+        id = "preview",
+        colors = { newClr }
+    }
+
+    dlg:modify {
+        id = "hexCode",
+        text = colorToHexWeb(newClr)
+    }
 end
 
-		------------------
--------> Set swatch color <-------
-		------------------
-function swatchUpdate( thisDlg )
+local function adoptAseColor(dlg, aseColor)
 
-		local dlgData = thisDlg.data
+    local rOld = aseColor.red
+    local gOld = aseColor.green
+    local bOld = aseColor.blue
+    local aOld = aseColor.alpha
 
-		dlgData.swatch = { Color{ r = math.ceil( ( dlgData.r0 + dlgData.r1 + dlgData.r2 + dlgData.r3 + dlgData.r4 + dlgData.r5 + dlgData.r6 + dlgData.r7 + dlgData.r8 ) * rStep ), g = math.ceil( ( dlgData.g0 + dlgData.g1 + dlgData.g2 + dlgData.g3 + dlgData.g4 + dlgData.g5 + dlgData.g6 + dlgData.g7 + dlgData.g8 ) * gStep ), b =  math.ceil( ( dlgData.b0 + dlgData.b1 + dlgData.b2 + dlgData.b3 + dlgData.b4 + dlgData.b5 + dlgData.b6 + dlgData.b7 + dlgData.b8 ) * bStep ) } }
+    local rNew = rOld
+    local gNew = gOld
+    local bNew = bOld
+    local aNew = aOld
 
-		thisDlg.data = dlgData
+    local args = dlg.data
+    local bd = args.bitDepth
+    if bd < 2 then
+        if rOld < 127.5 then rNew = 0 else rNew = 1 end
+        if gOld < 127.5 then gNew = 0 else gNew = 1 end
+        if bOld < 127.5 then bNew = 0 else bNew = 1 end
+        if args.constrainAlpha then
+            aNew = 1
+        end
+    elseif bd < 8 then
+        local mx = (1 << bd) - 1
+        rNew = mx * rNew // 255
+        gNew = mx * gNew // 255
+        bNew = mx * bNew // 255
 
+        rNew = saturate(rNew, rOld, mx, 255)
+        gNew = saturate(gNew, gOld, mx, 255)
+        bNew = saturate(bNew, bOld, mx, 255)
+
+        if args.constrainAlpha then
+            aNew = aNew * 255 // mx
+            aNew = saturate(aNew, aOld, mx, 255)
+        end
+    end
+
+    dlg:modify { id = "redChannel", value = rNew }
+    dlg:modify { id = "greenChannel", value = gNew }
+    dlg:modify { id = "blueChannel", value = bNew }
+    dlg:modify { id = "alphaChannel", value = aNew }
+
+    updatePreview(dlg)
 end
 
-
-
-		-------------------
--------> Accept user input <-------
-		-------------------
-function mainOK( thisDlg, thatDlg )
-
-	thisDlg:close()
-	
-	local newDlg = thatDlg
-
-	newDlg:show{ wait = false }
-
-	thatDlg.bounds = Rectangle{ x = thisDlg.bounds.x, y = thisDlg.bounds.y, width = thatDlg.bounds.width, height = thatDlg.bounds.height }
-	
-
-
-		--------------------------
--------> Modify active RED slider <-------
-		--------------------------
-	if thisDlg.data.rDepth ~= 8 then
-
-		thatDlg:modify{
-
-			id = "r8",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 7 then
-
-		thatDlg:modify{
-
-			id = "r7",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 6 then
-
-		thatDlg:modify{
-
-			id = "r6",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 5 then
-
-		thatDlg:modify{
-
-			id = "r5",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 4 then
-
-		thatDlg:modify{
-
-			id = "r4",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 3 then
-
-		thatDlg:modify{
-
-			id = "r3",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 2 then
-
-		thatDlg:modify{
-
-			id = "r2",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 1 then
-
-		thatDlg:modify{
-
-			id = "r1",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.rDepth ~= 0 then
-
-		thatDlg:modify{
-
-			id = "r0",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-
-
-
-		----------------------------
--------> Modify active GREEN slider <-------
-		----------------------------
-	if thisDlg.data.gDepth ~= 8 then
-
-		thatDlg:modify{
-
-			id = "g8",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 7 then
-
-		thatDlg:modify{
-
-			id = "g7",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 6 then
-
-		thatDlg:modify{
-
-			id = "g6",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 5 then
-
-		thatDlg:modify{
-
-			id = "g5",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 4 then
-
-		thatDlg:modify{
-
-			id = "g4",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 3 then
-
-		thatDlg:modify{
-
-			id = "g3",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 2 then
-
-		thatDlg:modify{
-
-			id = "g2",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 1 then
-
-		thatDlg:modify{
-
-			id = "g1",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.gDepth ~= 0 then
-
-		thatDlg:modify{
-
-			id = "g0",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-
-
-
-		---------------------------
--------> Modify active BLUE slider <-------
-		---------------------------
-	if thisDlg.data.bDepth ~= 8 then
-
-		thatDlg:modify{
-
-			id = "b8",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 7 then
-
-		thatDlg:modify{
-
-			id = "b7",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 6 then
-
-		thatDlg:modify{
-
-			id = "b6",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 5 then
-
-		thatDlg:modify{
-
-			id = "b5",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 4 then
-
-		thatDlg:modify{
-
-			id = "b4",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 3 then
-
-		thatDlg:modify{
-
-			id = "b3",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 2 then
-
-		thatDlg:modify{
-
-			id = "b2",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 1 then
-
-		thatDlg:modify{
-
-			id = "b1",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-	if thisDlg.data.bDepth ~= 0 then
-
-		thatDlg:modify{
-
-			id = "b0",
-
-			visible = false,
-
-			enabled = false
-
-		}
-
-	end
-
-
-
---> Set RED math step <--	
-	if thisDlg.data.rDepth == 8 then
-
-		rStep = 1
-
-	elseif thisDlg.data.rDepth == 7 then
-
-		rStep = 255 / 127
-
-	elseif thisDlg.data.rDepth == 6 then
-
-		rStep = 255 / 63
-
-	elseif thisDlg.data.rDepth == 5 then
-
-		rStep = 255 / 31
-
-	elseif thisDlg.data.rDepth == 4 then
-
-		rStep = 255 / 15
-
-	elseif thisDlg.data.rDepth == 3 then
-
-		rStep = 255 / 7
-
-	elseif thisDlg.data.rDepth == 2 then
-
-		rStep = 255 / 3
-
-	elseif thisDlg.data.rDepth == 1 then
-
-		rStep = 255
-
-	elseif thisDlg.data.rDepth == 0 then
-
-		rStep = 0
-
-	end
-
-
-
---> Ste GREEN math step <--
-	if thisDlg.data.gDepth == 8 then
-
-		gStep = 1
-
-	elseif thisDlg.data.gDepth == 7 then
-
-		gStep = 255 / 127
-
-	elseif thisDlg.data.gDepth == 6 then
-
-		gStep = 255 / 63
-
-	elseif thisDlg.data.gDepth == 5 then
-
-		gStep = 255 / 31
-
-	elseif thisDlg.data.gDepth == 4 then
-
-		gStep = 255 / 15
-
-	elseif thisDlg.data.gDepth == 3 then
-
-		gStep = 255 / 7
-
-	elseif thisDlg.data.gDepth == 2 then
-
-		gStep = 255 / 3
-
-	elseif thisDlg.data.gDepth == 1 then
-
-		gStep = 255
-
-	elseif thisDlg.data.gDepth == 0 then
-
-		gStep = 0
-
-	end
-
-
-
---> Set BLUE math step <--
-	if thisDlg.data.bDepth == 8 then
-
-		bStep = 1
-
-	elseif thisDlg.data.bDepth == 7 then
-
-		bStep = 255 / 127
-
-	elseif thisDlg.data.bDepth == 6 then
-
-		bStep = 255 / 63
-
-	elseif thisDlg.data.bDepth == 5 then
-
-		bStep = 255 / 31
-
-	elseif thisDlg.data.bDepth == 4 then
-
-		bStep = 255 / 15
-
-	elseif thisDlg.data.bDepth == 3 then
-
-		bStep = 255 / 7
-
-	elseif thisDlg.data.bDepth == 2 then
-
-		bStep = 255 / 3
-
-	elseif thisDlg.data.bDepth == 1 then
-
-		bStep = 255
-
-	elseif thisDlg.data.bDepth == 0 then
-
-		bStep = 0
-
-	end
-
-end
-
-
-
---.-------------------------.--
---| .---------------------. |--
---| | Create Setup dialog | |--
---| '---------------------' |--
---'-------------------------'--
-dlgSetup:label{ text = "Select number of bits per channel" }
-
-	:newrow()
-
-
-
---> RED depth slider <--
-	:slider{
-
-		id = "rDepth",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 8,
-
-		value = 0
-
-	}
-
-	:newrow()
-
-
-
---> GREEN depth slider <--
-	:slider{
-
-		id = "gDepth",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 8,
-
-		value = 0
-
-	}
-
-	:newrow()
-
-
-
---> BLUE depth slider <--
-	:slider{
-
-		id = "bDepth",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 8,
-
-		value = 0
-
-	}
-
-	:newrow()
-
-	:label{ text = "*0 means channel is disabled" }
-
-	:newrow()
-
-	:label{}
-
-	:newrow()
-
-	:button{
-
-		text = "OK",
-
-		onclick = function()
-
-			mainOK( dlgSetup, dlgRGB )
-
-		end
-
-	}
-
-dlgSetup:show{ wait = false }
-
-
-
---.-----------------------.--
---| .-------------------. |--
---| | Create RGB dialog | |--
---| '-------------------' |--
---'-----------------------'--
-dlgRGB:label{ text = "                     " }
-
-	:newrow()
-
-
-
-		------------
--------> RED SLIDER <-------
-		------------
-	:slider{
-
-		id = "r8",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 255,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-	
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r7",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 127,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r6",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 63,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r5",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 31,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r4",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 15,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r3",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 7,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r2",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 3,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r1",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 1,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "r0",
-
-		label = "Red  ",
-
-		min = 0,
-
-		max = 0,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-
-	:newrow()
-
-
-
-		--------------
--------> GREEN SLIDER <-------
-		--------------
-	:slider{
-
-		id = "g8",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 255,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g7",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 127,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g6",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 63,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g5",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 31,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g4",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 15,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g3",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 7,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g2",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 3,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g1",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 1,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "g0",
-
-		label = "Green",
-
-		min = 0,
-
-		max = 0,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-
-	:newrow()
-
-
-
-		-------------
--------> BLUE SLIDER <-------
-		-------------
-	:slider{
-
-		id = "b8",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 255,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b7",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 127,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b6",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 63,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b5",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 31,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b4",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 15,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b3",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 7,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b2",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 3,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b1",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 1,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-	:slider{
-
-		id = "b0",
-
-		label = "Blue ",
-
-		min = 0,
-
-		max = 0,
-
-		value = 0,
-
-		onchange = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end,
-
-		onrelease = function()
-
-			swatchUpdate( dlgRGB )
-			setColors( dlgRGB )
-
-		end
-
-	}
-
-	dlgRGB:newrow()
-
-	:check{
-
-		id = "lockState",
-
-		selected = 1,
-
-		text = "Lock palette colors",
-
-		onclick = function()
-
-			if lockState == 1 then
-
-				lockState = 0
-
-			elseif lockState == 0 then
-
-				lockState = 1
-
-			end
-
-		end
-
-	}
-
-	:newrow()
-
-
-		--------------
--------> Color swatch <-------
-		--------------
-	:shades{
-
-		id = "swatch",
-
-		mode = "sort",
-
-		colors = { Color{ r = 0, g = 0, b = 0 } }
-
-	}
-	
-	:newrow()
-
-	:label{}
-
-	:newrow()
-
-
-
-		----------------------
--------> Color manage buttons <-------
-		----------------------
-	:button{
-
-		text = "Get FG Color",
-
-		onclick = function()
-
-			colSel = 1
-
-			getColors( app.fgColor, dlgRGB, dlgSetup )
-
-			swatchUpdate( dlgRGB )
-
-		end
-
-	}
-
-	:newrow()
-
-	:button{
-
-		text = "Get BG Color",
-
-		onclick = function()
-
-			colSel = 0
-
-			getColors( app.bgColor, dlgRGB, dlgSetup )
-
-			swatchUpdate( dlgRGB )
-
-		end
-
-	}
+local prevMax = 255
+
+local dlg = Dialog { title = "Low Bits" }
+
+dlg:button {
+    id = "getFore",
+    label = "Get",
+    text = "&FORE",
+    focus = false,
+    onclick = function()
+        local srcClr = app.fgColor
+        adoptAseColor(dlg, srcClr)
+    end
+}
+
+dlg:button {
+    id = "getBack",
+    text = "&BACK",
+    focus = false,
+    onclick = function()
+        app.command.SwitchColors()
+        local srcClr = app.fgColor
+        app.command.SwitchColors()
+
+        adoptAseColor(dlg, srcClr)
+    end
+}
+
+dlg:shades {
+    id = "preview",
+    label = "Color",
+    mode = "pick",
+    colors = { Color(255, 255, 255, 255) },
+    onclick=function(ev)
+        if ev.button == MouseButton.LEFT then
+            app.fgColor = ev.color
+        elseif ev.button == MouseButton.RIGHT then
+            -- Bug where assigning to app.bgColor leads to
+            -- unlocked palette color assignment instead.
+            -- app.bgColor = ev.color
+            app.command.SwitchColors()
+            app.fgColor = ev.color
+            app.command.SwitchColors()
+        end
+    end
+}
+
+dlg:entry {
+    id = "hexCode",
+    label = "Hex #",
+    text = "ffffff",
+    focuse = false
+}
+
+dlg:slider {
+    id = "bitDepth",
+    label = "Depth",
+    min = 1,
+    max = 8,
+    value = 8,
+    onchange = function()
+        local args = dlg.data
+
+        local bd = args.bitDepth
+        local rOld = args.redChannel
+        local gOld = args.greenChannel
+        local bOld = args.blueChannel
+        local aOld = args.alphaChannel
+
+        local rNew = rOld
+        local gNew = gOld
+        local bNew = bOld
+        local aNew = aOld
+
+        -- 2 ^ n = 1 << n
+        local newMax = (1 << bd) - 1
+        if bd < 2 then
+            local halfMax = prevMax * 0.5
+            if rOld < halfMax then rNew = 0 else rNew = 1 end
+            if gOld < halfMax then gNew = 0 else gNew = 1 end
+            if bOld < halfMax then bNew = 0 else bNew = 1 end
+            if args.constrainAlpha then
+                aNew = 1
+            end
+        elseif newMax < prevMax then
+            -- Issue with slider drift when moving from more to less
+            -- information. E.g., 127 * 85 // 255 = 42
+            --                    255 * 42 // 127 = 84
+            --                    127 * 84 // 255 = 41
+            --                    255 * 41 // 127 = 82
+            -- To fix, an increment is added to odd numbers unless they
+            -- are on either the lower or upper bound.
+
+            rNew = newMax * rOld // prevMax
+            gNew = newMax * gOld // prevMax
+            bNew = newMax * bOld // prevMax
+
+            rNew = saturate(rNew, rOld, newMax, prevMax)
+            gNew = saturate(gNew, gOld, newMax, prevMax)
+            bNew = saturate(bNew, bOld, newMax, prevMax)
+
+            if args.constrainAlpha then
+                aNew = newMax * aOld // prevMax
+                aNew = saturate(aNew, aOld, newMax, prevMax)
+            end
+        elseif newMax > prevMax then
+            rNew = newMax * rOld // prevMax
+            gNew = newMax * gOld // prevMax
+            bNew = newMax * bOld // prevMax
+
+            if args.constrainAlpha then
+                aNew = newMax * aOld // prevMax
+            end
+        end
+
+        dlg:modify { id = "redChannel", max = newMax }
+        dlg:modify { id = "greenChannel", max = newMax }
+        dlg:modify { id = "blueChannel", max = newMax }
+
+        dlg:modify { id = "redChannel", value = rNew }
+        dlg:modify { id = "greenChannel", value = gNew }
+        dlg:modify { id = "blueChannel", value = bNew }
+
+        if args.constrainAlpha then
+            dlg:modify { id = "alphaChannel", max = newMax }
+            dlg:modify { id = "alphaChannel", value = aNew }
+        end
+
+        updatePreview(dlg)
+
+        prevMax = newMax
+    end
+}
+
+dlg:slider {
+    id = "redChannel",
+    label = "R",
+    min = 0,
+    max = 255,
+    value = 255,
+    onchange = function()
+        updatePreview(dlg)
+    end
+}
+
+dlg:slider {
+    id = "greenChannel",
+    label = "G",
+    min = 0,
+    max = 255,
+    value = 255,
+    onchange = function()
+        updatePreview(dlg)
+    end
+}
+
+dlg:slider {
+    id = "blueChannel",
+    label = "B",
+    min = 0,
+    max = 255,
+    value = 255,
+    onchange = function()
+        updatePreview(dlg)
+    end
+}
+
+dlg:slider {
+    id = "alphaChannel",
+    label = "A",
+    min = 0,
+    max = 255,
+    value = 255,
+    onchange = function()
+        updatePreview(dlg)
+    end
+}
+
+dlg:check {
+    id = "constrainAlpha",
+    text = "Reduce Alpha",
+    selected = false,
+    onclick = function()
+        local args = dlg.data
+        if args.constrainAlpha then
+            local bd = args.bitDepth
+            local newMax = (1 << bd) - 1
+            dlg:modify { id = "alphaChannel", max = newMax }
+            dlg:modify { id = "alphaChannel", value = newMax }
+        else
+            dlg:modify { id = "alphaChannel", max = 255 }
+            dlg:modify { id = "alphaChannel", value = 255 }
+        end
+
+        updatePreview(dlg)
+    end
+}
+
+dlg:button {
+    id = "cancel",
+    text = "&CANCEL",
+    focus = false,
+    onclick = function()
+        dlg:close()
+    end
+}
+
+dlg:show { wait = false }
+
+-- local mx = (1 << 6) - 1
+-- local str = ""
+-- local prev = 0
+-- for i = 0, mx, 1 do
+--     local c = recalcColor(
+--         6,
+--         i,i,i, 255, false)
+--     str = str .. string.format("%d|%d|%02X|%d\n", i, c.blue, c.blue, c.blue - prev)
+
+--     prev = c.blue
+-- end
+-- print(str)
+
+-- local file = io.open("C:\\Users\\Jeremy Behreandt\\blah.txt", "a")
+-- file:write(str, "\n")
+-- file:close()
+-- return
