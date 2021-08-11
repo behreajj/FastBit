@@ -2,13 +2,11 @@
 --https://github.com/WolftrooperNo86/FastBit
 --licensed under GNU General Public License v3.0.
 
-local function saturate(cn, co, mxNew, mxPrev)
-    -- co & 1 == 0 tests for even or odd, like co % 2.
-    if cn > 0 and cn < mxNew and co & 1 == 0 then
-        return cn + mxNew // mxPrev
-    else
-        return cn
-    end
+local function colorToHexWeb(aseColor)
+    return string.format("%06x",
+        aseColor.red << 0x10
+        | aseColor.green << 0x08
+        | aseColor.blue)
 end
 
 local function expandColorTo256(
@@ -26,11 +24,37 @@ local function expandColorTo256(
     return ase
 end
 
-local function colorToHexWeb(aseColor)
-    return string.format("%06x",
-        aseColor.red << 0x10
-        | aseColor.green << 0x08
-        | aseColor.blue)
+local function saturate(cn, co, mxNew, mxPrev)
+    -- co & 1 == 0 tests for even or odd, like co % 2.
+    if cn > 0 and cn < mxNew and co & 1 == 0 then
+        return cn + mxNew // mxPrev
+    else
+        return cn
+    end
+end
+
+local function contract256Channel(cDepth, cOld)
+    local cNew = cOld
+    if cDepth < 2 then
+        if cOld < 127.5 then cNew = 0 else cNew = 1 end
+    elseif cDepth < 8 then
+        local rmx = (1 << cDepth) - 1
+        cNew = rmx * cNew // 255
+        cNew = saturate(cNew, cOld, rmx, 255)
+    end
+    return cNew
+end
+
+local function contract256Color(
+    rDepth, gDepth, bDepth, aDepth,
+    r, g, b, a)
+
+    local rNew = contract256Channel(rDepth, r)
+    local gNew = contract256Channel(gDepth, g)
+    local bNew = contract256Channel(bDepth, b)
+    local aNew = contract256Channel(aDepth, a)
+
+    return rNew, gNew, bNew, aNew
 end
 
 local function updatePreview(dialog)
@@ -56,30 +80,6 @@ local function updatePreview(dialog)
         id = "hexCode",
         text = colorToHexWeb(newClr)
     }
-end
-
-local function contract56Channel(cDepth, cOld)
-    local cNew = cOld
-    if cDepth < 2 then
-        if cOld < 127.5 then cNew = 0 else cNew = 1 end
-    elseif cDepth < 8 then
-        local rmx = (1 << cDepth) - 1
-        cNew = rmx * cNew // 255
-        cNew = saturate(cNew, cOld, rmx, 255)
-    end
-    return cNew
-end
-
-local function contract256Color(
-    rDepth, gDepth, bDepth, aDepth,
-    r, g, b, a)
-
-    local rNew = contract56Channel(rDepth, r)
-    local gNew = contract56Channel(gDepth, g)
-    local bNew = contract56Channel(bDepth, b)
-    local aNew = contract56Channel(aDepth, a)
-
-    return rNew, gNew, bNew, aNew
 end
 
 local function adoptAseColor(dlg, aseColor)
@@ -119,34 +119,6 @@ local function updateSlider(dialog, depth, oldVal, maxPrev, sliderName)
     dialog:modify { id = sliderName, value = newVal }
 
     return newMax
-end
-
-local function updateAllSliders(
-    dialog,
-    rmpOld, gmpOld, bmpOld, ampOld)
-
-    local args = dialog.data
-    local rmp = updateSlider(
-        dialog, args.redDepth,
-        args.redChannel, rmpOld,
-        "redChannel")
-
-    local gmp = updateSlider(
-        dialog, args.greenDepth,
-        args.greenChannel, gmpOld,
-        "greenChannel")
-
-    local bmp = updateSlider(
-        dialog, args.blueDepth,
-        args.blueChannel, bmpOld,
-        "blueChannel")
-
-    local amp = updateSlider(
-        dialog, args.alphaDepth,
-        args.alphaChannel, ampOld,
-        "alphaChannel")
-
-    return { rmp, gmp, bmp, amp }
 end
 
 local rMaxPrev = 255
