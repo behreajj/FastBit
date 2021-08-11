@@ -25,10 +25,10 @@ As seen in the screen capture above, the underlined letters on the buttons show 
 
 The color wheel is not guaranteed to give you every color available for the selected channel bit-depths. The palette assigned to the sprite containing the color wheel is clamped to 256 maximum. The number of frames to animate the increase in lightness of the color wheel is based on the maximum bit-depth for red, green and blue channels.
 
-I am still researching the proper expansions from low bit to standard RGB. The tables below are diagnostic print-outs for both myself and for interested readers to compare this script's outputs against other standards and palettes. The one, seven and eight bit tables are omitted. I count the number of bits per _one_ color channel, so readers may need to multiply by three to match other naming conventions. For example, "five bits" would be "fifteen bit RGB."
+I am still researching the proper expansions from low bit to standard RGB. The tables below are diagnostic print-outs for both myself and for interested readers to compare this script's outputs against other standards and palettes. The one, seven and eight bit tables are omitted. I count the number of bits per _one_ color channel, so readers may need to multiply by three to match other naming conventions. For example, "five bits" would be "fifteen bit RGB." Differences are included in cases where 256 - 1 divided by the number of steps - 1 does not yield an integer quotient.
 
 ## Two Bits
-`2 ^ 2 = 4`, `1 << 2 = 4`
+`2 ^ 2 = 4`, `1 << 2 = 4`, `255 / (4 - 1) = 85`
 
 ![Bit 2](bit2.png)
 
@@ -44,7 +44,7 @@ Step|Decimal|Hex
 *The reference image contains channel values such as `1` and `171` (`AB`).
 
 ## Three Bits
-`2 ^ 3 = 8`, `1 << 3 = 8`
+`2 ^ 3 = 8`, `1 << 3 = 8`, `255 / (8 - 1) = 36.42857142857143`
 
 ![Bit 3](bit3.png)
 
@@ -62,7 +62,7 @@ Step|Decimal|Hex|Diff|
 7|255|FF|37
 
 ## Four Bits
-`2 ^ 4 = 16`, `1 << 4 = 16`
+`2 ^ 4 = 16`, `1 << 4 = 16`, `255 / (16 - 1) = 17`
 
 ![Bit 4](bit4.png)
 
@@ -88,7 +88,7 @@ Step|Decimal|Hex|
 15|255|FF
 
 ## Five Bits
-`2 ^ 5 = 32`, `1 << 5 = 32`
+`2 ^ 5 = 32`, `1 << 5 = 32`, `255 / (32 - 1) = 8.225806451612903`
 
 ![Bit 5](bit5.png)
 
@@ -132,7 +132,7 @@ Step|Decimal|Hex|Diff|
 *There are numerous discrepancies between the refactor, the original fast bit script and the Wikipedia reference. A formula specific to the SNES palette can be found at [https://wiki.superfamicom.org/palettes](https://wiki.superfamicom.org/palettes).
 
 ## Six Bits
-`2 ^ 6 = 64`, `1 << 6 = 64`
+`2 ^ 6 = 64`, `1 << 6 = 64`, `255 / (64 - 1) = 4.047619047619048`
 
 ![Bit 6](bit6.png)
 
