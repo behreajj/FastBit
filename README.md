@@ -19,11 +19,13 @@ I have refactored the code for general readability and maintainability.
 
 Color bit-depth can now be changed without separate dialog windows. There are no plans to support uniform control over RGB bit-depth.
 
-Foreground and background colors are no longer automatically updated by the dialog; this is less convenient, but it is done to avoid overwriting color entries in unlocked palettes. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code.
+Foreground and background colors are no longer  updated by the dialog; this is to avoid overwriting color entries in unlocked palettes. Furthermore, the dialog is no longer concerned about a sprite's color mode, or whether a sprite is open at all. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code.
 
 As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+W` creates a new sprite with a color wheel; `Alt+C` closes the dialog.
 
-The color wheel is not guaranteed to give you every color available for the selected channel bit-depths. The palette assigned to the sprite containing the color wheel is clamped to 256 maximum. The number of frames to animate the increase in lightness of the color wheel is based on the maximum bit-depth for red, green and blue channels.
+The HSL color wheel is not guaranteed to give you every color available for the selected channel bit-depths. The number of frames to animate the lightness of the color wheel is based on the maximum bit-depth for red, green and blue channels. HSL is not perceptually uniform. It is used only because it is popular and is built-in. See instead [HSLuv](https://www.hsluv.org/) or [LCH](https://css.land/lch/).
+
+The palette assigned to the sprite containing the color wheel is clamped to 256 maximum. Index 0 is set to the alpha mask. There's no point in using Aseprite's palette creation algorithms, as the condensed palette will not preserve bit-depth safe colors. 
 
 I am still researching the proper expansions from low bit to standard RGB. The tables below are diagnostic print-outs for both myself and for interested readers to compare this script's outputs against other standards and palettes. The one, seven and eight bit tables are omitted. I count the number of bits per _one_ color channel, so readers may need to multiply by three to match other naming conventions. For example, "five bits" would be "fifteen bit RGB." Differences are included in cases where 256 - 1 divided by the number of steps - 1 does not yield an integer quotient.
 
