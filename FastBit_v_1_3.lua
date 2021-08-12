@@ -9,25 +9,39 @@ local function colorToHexWeb(aseColor)
         | aseColor.blue)
 end
 
+local function expandChannelTo256(cDepth, cOld)
+    -- Half the denominator needs to be added to the
+    -- numerator in order to properly bias the color.
+    -- Equivalent to real number
+    -- math.tointeger(cOld * 255.0 / cMax + 0.5)
+    -- See https://stackoverflow.com/a/29326693 .
+
+    if cDepth < 2 then
+        if cOld < 1 then return 0 else return 255 end
+    elseif cDepth < 8 then
+        local cMax = ((1 << cDepth) - 1)
+        return (cOld * 255 + (cMax >> 1)) // cMax
+    else
+        return cOld
+    end
+end
+
 local function expandColorTo256(
     rDepth, gDepth, bDepth, aDepth,
     r, g, b, a,
     aseColor)
 
     local ase = aseColor or Color(0, 0, 0, 0)
-
-    ase.red = r * 255 // ((1 << rDepth) - 1)
-    ase.green = g * 255 // ((1 << gDepth) - 1)
-    ase.blue = b * 255 // ((1 << bDepth) - 1)
-    ase.alpha = a * 255 // ((1 << aDepth) - 1)
-
+    ase.red = expandChannelTo256(rDepth, r)
+    ase.green = expandChannelTo256(gDepth, g)
+    ase.blue = expandChannelTo256(bDepth, b)
+    ase.alpha = expandChannelTo256(aDepth, a)
     return ase
 end
 
 local function saturate(cn, co, mxNew, mxPrev)
     -- co & 1 == 0 tests for even or odd, like co % 2.
     if cn > 0 and cn < mxNew and co & 1 == 0 then
-        -- return cn + mxNew // mxPrev
         return cn + 1
     else
         return cn
@@ -35,14 +49,14 @@ local function saturate(cn, co, mxNew, mxPrev)
 end
 
 local function contract256Channel(cDepth, cOld)
-    local cNew = cOld
     if cDepth < 2 then
-        if cOld < 128 then cNew = 0 else cNew = 1 end
+        if cOld < 128 then return 0 else return 1 end
     elseif cDepth < 8 then
         local cMax = (1 << cDepth) - 1
-        cNew = math.ceil(cMax * cNew * 0.00392156862745098)
+        return (cOld * cMax + 127) // 255
+    else
+        return cOld
     end
-    return cNew
 end
 
 local function contract256Color(
@@ -94,9 +108,6 @@ local function adoptAseColor(dlg, aseColor)
         aseColor.blue,
         aseColor.alpha)
 
-    -- TODO: Reciprocity problem: Where getting a color
-    -- from the wheel created by the same channel values
-    -- is one less than it should be.
     dlg:modify { id = "redChannel", value = rNew }
     dlg:modify { id = "greenChannel", value = gNew }
     dlg:modify { id = "blueChannel", value = bNew }
@@ -323,7 +334,6 @@ dlg:button {
     text = "&WHEEL",
     focus = false,
     onclick = function()
-
         local args = dlg.data
         local rDepth = args.redDepth
         local gDepth = args.greenDepth
@@ -339,6 +349,8 @@ dlg:button {
         layer.name = string.format("Color.Wheel.R%d.G%d.B%d",
             rDepth, gDepth, bDepth)
 
+        -- Create frames and cels in a separate transaction.
+        -- The first frame and cel already exist.
         local cels = { sprite.cels[1] }
         app.transaction(function()
             for i = 2, frameCount, 1 do
@@ -353,14 +365,50 @@ dlg:button {
             local iToPercent = 1.0 / (frameCount + 1.0)
             local xToPercent = 1.0 / (width - 1.0)
             local yToPercent = 1.0 / (height - 1.0)
+
+            -- "Lua Performance Tips"
+            -- by Roberto Ierusalimschy
+            -- advises caching math functions.
+            -- See https://www.lua.org/gems/sample.pdf
             local atan2 = math.atan
             local deg = math.deg
             local sqrt = math.sqrt
+
             for i = 0, frameCount - 1, 1 do
                 local cel = cels[i + 1]
                 local image = Image(width, height)
                 local itr = image:pixels()
                 local iPrc = (i + 1) * iToPercent
+
+                local grayColor = Color {
+                    h = 0.0,
+                    s = 0.0,
+                    l = iPrc,
+                    a = 255 }
+
+                local r = grayColor.red
+                local g = grayColor.green
+                local b = grayColor.blue
+                local a = grayColor.alpha
+
+                r, g, b, a = contract256Color(
+                    rDepth,
+                    gDepth,
+                    bDepth,
+                    aDepth,
+                    r, g, b, a)
+
+                expandColorTo256(
+                    rDepth,
+                    gDepth,
+                    bDepth,
+                    aDepth,
+                    r, g, b, a,
+                    grayColor)
+
+                local grayHex = grayColor.rgbaPixel
+                clrDict[grayHex] = true
+
                 for elm in itr do
                     local x = elm.x
                     local xPrc = x * xToPercent
@@ -371,48 +419,45 @@ dlg:button {
                     local ySgn = yPrc + yPrc - 1.0
 
                     local magSq = xSgn * xSgn + ySgn * ySgn
-                    if magSq > 0.000001 and magSq <= 1.0 then
-                        local angleRad = atan2(ySgn, xSgn)
-                        local angleDeg = deg(angleRad) % 360.0
-                        local sat = sqrt(magSq)
-                        local aseColor = Color {
-                            h = angleDeg,
-                            s = sat,
-                            l = iPrc,
-                            a = 255
-                        }
+                    if magSq <= 1.0 then
+                        if magSq > 0.0 then
+                            local angleRad = atan2(ySgn, xSgn)
+                            local angleDeg = deg(angleRad) % 360.0
+                            local sat = sqrt(magSq)
+                            local aseColor = Color {
+                                h = angleDeg,
+                                s = sat,
+                                l = iPrc,
+                                a = 255 }
 
-                        local r = aseColor.red
-                        local g = aseColor.green
-                        local b = aseColor.blue
-                        local a = aseColor.alpha
+                            r = aseColor.red
+                            g = aseColor.green
+                            b = aseColor.blue
+                            a = aseColor.alpha
 
-                        r, g, b, a = contract256Color(
-                            rDepth,
-                            gDepth,
-                            bDepth,
-                            aDepth,
-                            r, g, b, a)
+                            r, g, b, a = contract256Color(
+                                rDepth,
+                                gDepth,
+                                bDepth,
+                                aDepth,
+                                r, g, b, a)
 
-                        local newClr = expandColorTo256(
-                            rDepth,
-                            gDepth,
-                            bDepth,
-                            aDepth,
-                            r, g, b, a,
-                            aseColor)
+                            local newClr = expandColorTo256(
+                                rDepth,
+                                gDepth,
+                                bDepth,
+                                aDepth,
+                                r, g, b, a,
+                                aseColor)
 
-                        local hex = newClr.rgbaPixel
-                        clrDict[hex] = true
-                        elm(hex)
+                            local satHex = newClr.rgbaPixel
+                            clrDict[satHex] = true
+                            elm(satHex)
+                        else
+                            elm(grayHex)
+                        end
                     else
-                        local aseColor = Color {
-                            h = 0.0,
-                            s = 0.0,
-                            l = iPrc,
-                            a = 255
-                        }
-                        elm(aseColor.rgbaPixel)
+                        elm(0x0)
                     end
                 end
 
@@ -420,20 +465,22 @@ dlg:button {
             end
         end)
 
+        -- Convert dictionary to array.
         local clrArr = {}
         for k, _ in pairs(clrDict) do
             table.insert(clrArr, Color(k))
         end
         local clrsLen = #clrArr
 
+        -- Create palette.
         local palette = Palette(math.min(256, clrsLen + 1))
         palette:setColor(0, Color(0, 0, 0, 0))
         for i = 1, #palette - 1, 1 do
             palette:setColor(i, clrArr[i])
         end
-
         sprite:setPalette(palette)
 
+        -- Set to middle frame, where light is 50%.
         app.activeFrame = 1 + frameCount // 2
         app.refresh()
     end
@@ -450,20 +497,20 @@ dlg:button {
 
 dlg:show { wait = false }
 
--- local mx = (1 << 6) - 1
 -- local str = ""
--- local prev = 0
--- for i = 0, mx, 1 do
---     local c = recalcColor(
---         6,
---         i,i,i, 255, false)
---     str = str .. string.format("%d|%d|%02X|%d\n", i, c.blue, c.blue, c.blue - prev)
-
---     prev = c.blue
+-- for i = 2, 6, 1 do
+--     local mstr = "Step|Decimal|Hex|Diff|\n---:|------:|--:|---:|\n"
+--     local prev = 0
+--     for j = 0, ((1 << i) - 1), 1 do
+--         local x = expandChannelTo256(i, j)
+--         mstr = mstr .. string.format("%d|%d|%02X|%d\n", j, x, x, x - prev)
+--         prev = x
+--     end
+--     mstr = mstr .. "\n"
+--     str = str .. mstr
 -- end
--- print(str)
 
--- local file = io.open("C:\\Users\\Jeremy Behreandt\\blah.txt", "a")
+-- local file = io.open("path/to", "a")
 -- file:write(str, "\n")
 -- file:close()
 -- return

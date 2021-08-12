@@ -34,9 +34,9 @@ I am still researching the proper expansions from low bit to standard RGB. The t
 
 ![Bit 2](bit2.png)
 
-[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#6-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#6-bit_RGB)*
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#6-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#6-bit_RGB)*
 
-Step|Decimal|Hex
+Step|Decimal|Hex|
 ---:|------:|--:|
 0|0|00
 1|85|55
@@ -50,25 +50,25 @@ Step|Decimal|Hex
 
 ![Bit 3](bit3.png)
 
-[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#9-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#9-bit_RGB)
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#9-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#9-bit_RGB)
 
 Step|Decimal|Hex|Diff|
 ---:|------:|--:|---:|
 0|0|00|
 1|36|24|36
-2|72|48|36
-3|109|6D|37
-4|145|91|36
-5|182|B6|37
-6|218|DA|36
-7|255|FF|37
+2|73|49|37
+3|109|6D|36
+4|146|92|37
+5|182|B6|36
+6|219|DB|37
+7|255|FF|36
 
 ## Four Bits
 `2 ^ 4 = 16`, `1 << 4 = 16`, `255 / (16 - 1) = 17`
 
 ![Bit 4](bit4.png)
 
-[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#12-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#12-bit_RGB)
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#12-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#12-bit_RGB)
 
 Step|Decimal|Hex|
 ---:|------:|--:|
@@ -94,42 +94,42 @@ Step|Decimal|Hex|
 
 ![Bit 5](bit5.png)
 
-[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#15-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#15-bit_RGB)*
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#15-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#15-bit_RGB)*
 
 Step|Decimal|Hex|Diff|
 ---:|------:|--:|---:|
 0|0|00|
 1|8|08|8
 2|16|10|8
-3|24|18|8
-4|32|20|8
-5|41|29|9
+3|25|19|9
+4|33|21|8
+5|41|29|8
 6|49|31|8
-7|57|39|8
-8|65|41|8
-9|74|4A|9
+7|58|3A|9
+8|66|42|8
+9|74|4A|8
 10|82|52|8
 11|90|5A|8
-12|98|62|8
-13|106|6A|8
-14|115|73|9
+12|99|63|9
+13|107|6B|8
+14|115|73|8
 15|123|7B|8
-16|131|83|8
-17|139|8B|8
-18|148|94|9
+16|132|84|9
+17|140|8C|8
+18|148|94|8
 19|156|9C|8
-20|164|A4|8
-21|172|AC|8
-22|180|B4|8
-23|189|BD|9
+20|165|A5|9
+21|173|AD|8
+22|181|B5|8
+23|189|BD|8
 24|197|C5|8
-25|205|CD|8
-26|213|D5|8
-27|222|DE|9
+25|206|CE|9
+26|214|D6|8
+27|222|DE|8
 28|230|E6|8
-29|238|EE|8
-30|246|F6|8
-31|255|FF|9
+29|239|EF|9
+30|247|F7|8
+31|255|FF|8
 
 *There are numerous discrepancies between the refactor, the original fast bit script and the Wikipedia reference. A formula specific to the SNES palette can be found at [https://wiki.superfamicom.org/palettes](https://wiki.superfamicom.org/palettes).
 
@@ -138,7 +138,7 @@ Step|Decimal|Hex|Diff|
 
 ![Bit 6](bit6.png)
 
-[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#18-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats?oldformat=true#18-bit_RGB)
+[https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#18-bit_RGB](https://en.wikipedia.org/wiki/List_of_monochrome_and_RGB_color_formats#18-bit_RGB)
 
 Step|Decimal|Hex|Diff|
 ---:|------:|--:|---:|
@@ -153,17 +153,17 @@ Step|Decimal|Hex|Diff|
 8|32|20|4
 9|36|24|4
 10|40|28|4
-11|44|2C|4
-12|48|30|4
-13|52|34|4
-14|56|38|4
-15|60|3C|4
-16|64|40|4
-17|68|44|4
-18|72|48|4
-19|76|4C|4
-20|80|50|4
-21|85|55|5
+11|45|2D|5
+12|49|31|4
+13|53|35|4
+14|57|39|4
+15|61|3D|4
+16|65|41|4
+17|69|45|4
+18|73|49|4
+19|77|4D|4
+20|81|51|4
+21|85|55|4
 22|89|59|4
 23|93|5D|4
 24|97|61|4
@@ -174,17 +174,17 @@ Step|Decimal|Hex|Diff|
 29|117|75|4
 30|121|79|4
 31|125|7D|4
-32|129|81|4
-33|133|85|4
-34|137|89|4
-35|141|8D|4
-36|145|91|4
-37|149|95|4
-38|153|99|4
-39|157|9D|4
-40|161|A1|4
-41|165|A5|4
-42|170|AA|5
+32|130|82|5
+33|134|86|4
+34|138|8A|4
+35|142|8E|4
+36|146|92|4
+37|150|96|4
+38|154|9A|4
+39|158|9E|4
+40|162|A2|4
+41|166|A6|4
+42|170|AA|4
 43|174|AE|4
 44|178|B2|4
 45|182|B6|4
@@ -195,14 +195,14 @@ Step|Decimal|Hex|Diff|
 50|202|CA|4
 51|206|CE|4
 52|210|D2|4
-53|214|D6|4
-54|218|DA|4
-55|222|DE|4
-56|226|E2|4
-57|230|E6|4
-58|234|EA|4
-59|238|EE|4
-60|242|F2|4
-61|246|F6|4
-62|250|FA|4
-63|255|FF|5
+53|215|D7|5
+54|219|DB|4
+55|223|DF|4
+56|227|E3|4
+57|231|E7|4
+58|235|EB|4
+59|239|EF|4
+60|243|F3|4
+61|247|F7|4
+62|251|FB|4
+63|255|FF|4
