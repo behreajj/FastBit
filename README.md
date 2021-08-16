@@ -19,9 +19,9 @@ I have refactored the code for general readability and maintainability.
 
 Color bit-depth can now be changed without separate dialog windows. There are no plans to support uniform control over RGB bit-depth.
 
-Foreground and background colors are no longer  updated by the dialog; this is to avoid overwriting color entries in unlocked palettes. Furthermore, the dialog is no longer concerned about a sprite's color mode, or whether a sprite is open at all. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code.
+ The dialog no longer concerns itself whether a sprite is open or what its color mode is. This can result in a [bug](https://github.com/aseprite/api/issues/56) where opening the color picker while a grayscale sprite is active will lead to gray colors in the preview. Even so, I feel this is worth the trade-off. Furthermore, remember that a sprite's color management profile may impact either the appearance or the numberical values of a color.
 
-As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+W` creates a new sprite with a color wheel; `Alt+C` closes the dialog.
+Foreground and background colors are no longer updated by the dialog; this is to avoid overwriting color entries in unlocked palettes As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+W` creates a new sprite with a color wheel; `Alt+C` closes the dialog. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code. 
 
 The HSL color wheel is not guaranteed to give you every color available for the selected channel bit-depths. The number of frames to animate the lightness of the color wheel is based on the maximum bit-depth for red, green and blue channels. HSL is not perceptually uniform. It is used only because it is popular and is built-in. See instead [HSLuv](https://www.hsluv.org/) or [LCH](https://css.land/lch/).
 
@@ -31,6 +31,8 @@ I am still researching the proper expansions from low bit to standard RGB. The t
 
 ## Two Bits
 `2 ^ 2 = 4`, `1 << 2 = 4`, `255 / (4 - 1) = 85`
+
+`4 ^ 3 = 64` possible colors
 
 ![Bit 2](bit2.png)
 
@@ -47,6 +49,8 @@ Step|Decimal|Hex|
 
 ## Three Bits
 `2 ^ 3 = 8`, `1 << 3 = 8`, `255 / (8 - 1) = 36.42857142857143`
+
+`8 ^ 3 = 512` possible colors
 
 ![Bit 3](bit3.png)
 
@@ -65,6 +69,8 @@ Step|Decimal|Hex|Diff|
 
 ## Four Bits
 `2 ^ 4 = 16`, `1 << 4 = 16`, `255 / (16 - 1) = 17`
+
+`16 ^ 3 = 4096` possible colors
 
 ![Bit 4](bit4.png)
 
@@ -91,6 +97,8 @@ Step|Decimal|Hex|
 
 ## Five Bits
 `2 ^ 5 = 32`, `1 << 5 = 32`, `255 / (32 - 1) = 8.225806451612903`
+
+`32 ^ 3 = 32768` possible colors
 
 ![Bit 5](bit5.png)
 
@@ -135,6 +143,8 @@ Step|Decimal|Hex|Diff|
 
 ## Six Bits
 `2 ^ 6 = 64`, `1 << 6 = 64`, `255 / (64 - 1) = 4.047619047619048`
+
+`64 ^ 3 = 262144` possible colors
 
 ![Bit 6](bit6.png)
 

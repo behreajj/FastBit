@@ -416,7 +416,7 @@ dlg:button {
 
                     local y = elm.y
                     local yPrc = y * yToPercent
-                    local ySgn = yPrc + yPrc - 1.0
+                    local ySgn = 1.0 - (yPrc + yPrc)
 
                     local magSq = xSgn * xSgn + ySgn * ySgn
                     if magSq <= 1.0 then
