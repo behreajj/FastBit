@@ -2,6 +2,14 @@
 --https://github.com/WolftrooperNo86/FastBit
 --licensed under GNU General Public License v3.0.
 
+local function copyColorByValue(aseColor)
+    return Color(
+        aseColor.red,
+        aseColor.green,
+        aseColor.blue,
+        aseColor.alpha)
+end
+
 local function colorToHexWeb(aseColor)
     return string.format("%06x",
         aseColor.red << 0x10
@@ -139,6 +147,7 @@ local rMaxPrev = 255
 local gMaxPrev = 255
 local bMaxPrev = 255
 local aMaxPrev = 255
+local sRgbClrSpc = ColorSpace { sRGB = true }
 
 local dlg = Dialog { title = "Low Bits" }
 
@@ -148,7 +157,23 @@ dlg:button {
     text = "&FORE",
     focus = false,
     onclick = function()
-        local srcClr = app.fgColor
+        local srcClr = nil
+        local activeSprite = app.activeSprite
+
+        if activeSprite then
+            local args = dlg.data
+            if args.getClrMgmt == "VISUAL" then
+                local oldClrSpc = activeSprite.colorSpace
+                activeSprite:convertColorSpace(sRgbClrSpc)
+                srcClr = copyColorByValue(app.fgColor)
+                activeSprite:convertColorSpace(oldClrSpc)
+            else
+                srcClr = copyColorByValue(app.fgColor)
+            end
+        else
+            srcClr = copyColorByValue(app.fgColor)
+        end
+
         adoptAseColor(dlg, srcClr)
     end
 }
@@ -158,9 +183,25 @@ dlg:button {
     text = "&BACK",
     focus = false,
     onclick = function()
+        local srcClr = nil
+        local activeSprite = app.activeSprite
+
         app.command.SwitchColors()
-        local srcClr = app.fgColor
+        if activeSprite then
+            local args = dlg.data
+            if args.getClrMgmt == "VISUAL" then
+                local oldClrSpc = activeSprite.colorSpace
+                activeSprite:convertColorSpace(sRgbClrSpc)
+                srcClr = copyColorByValue(app.fgColor)
+                activeSprite:convertColorSpace(oldClrSpc)
+            else
+                srcClr = copyColorByValue(app.fgColor)
+            end
+        else
+            srcClr = copyColorByValue(app.fgColor)
+        end
         app.command.SwitchColors()
+
         adoptAseColor(dlg, srcClr)
     end
 }
@@ -174,15 +215,21 @@ dlg:shades {
     colors = { Color(255, 255, 255, 255) },
     onclick=function(ev)
         local clr = ev.color
-        if clr.alpha < 1 then clr = Color(0, 0, 0, 0) end
+        local noAlpha = clr.alpha < 1
+
         if ev.button == MouseButton.LEFT then
-            app.fgColor = clr
+            if noAlpha then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = copyColorByValue(clr)
+            end
         elseif ev.button == MouseButton.RIGHT then
-            -- Bug where assigning to app.bgColor leads to
-            -- unlocked palette color assignment instead.
-            -- app.bgColor = ev.color
             app.command.SwitchColors()
-            app.fgColor = clr
+            if noAlpha then
+                app.fgColor = Color(0, 0, 0, 0)
+            else
+                app.fgColor = copyColorByValue(clr)
+            end
             app.command.SwitchColors()
         end
     end
@@ -327,6 +374,17 @@ dlg:slider {
     onchange = function()
         updatePreview(dlg)
     end
+}
+
+dlg:separator{
+    id = "clrMgmtSep",
+    text = "Color Profile" }
+
+dlg:combobox {
+    id = "getClrMgmt",
+    label = "Continuity",
+    option = "NUMERIC",
+    options = { "VISUAL", "NUMERIC" }
 }
 
 dlg:newrow { always = false }

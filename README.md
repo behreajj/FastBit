@@ -19,7 +19,7 @@ I have refactored the code for general readability and maintainability.
 
 Color bit-depth can now be changed without separate dialog windows. There are no plans to support uniform control over RGB bit-depth.
 
- The dialog no longer concerns itself whether a sprite is open or what its color mode is. This can result in a [bug](https://github.com/aseprite/api/issues/56) where opening the color picker while a grayscale sprite is active will lead to gray colors in the preview. Even so, I feel this is worth the trade-off. Furthermore, remember that a sprite's color management profile may impact either the appearance or the numberical values of a color.
+ The dialog no longer concerns itself whether a sprite is open or what its color mode is. This can result in a [bug](https://github.com/aseprite/api/issues/56) where opening the color picker while a grayscale sprite is active will lead to gray colors in the preview. Even so, I feel this is worth the trade-off. Note that an active sprite's color management profile may impact either the appearance or the numerical values of a color.
 
 Foreground and background colors are no longer updated by the dialog; this is to avoid overwriting color entries in unlocked palettes As seen in the screen capture above, the underlined letters on the buttons show that `Alt+F` gets the foreground color; `Alt+B`, the background color; `Alt+W` creates a new sprite with a color wheel; `Alt+C` closes the dialog. You can left click on the color preview to assign to the foreground color; right click, to the background color. You can also copy and paste the hexadecimal code. 
 
