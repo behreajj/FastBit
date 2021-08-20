@@ -158,22 +158,7 @@ dlg:button {
     focus = false,
     onclick = function()
         local srcClr = nil
-        local activeSprite = app.activeSprite
-
-        if activeSprite then
-            local args = dlg.data
-            if args.getClrMgmt == "VISUAL" then
-                local oldClrSpc = activeSprite.colorSpace
-                activeSprite:convertColorSpace(sRgbClrSpc)
-                srcClr = copyColorByValue(app.fgColor)
-                activeSprite:convertColorSpace(oldClrSpc)
-            else
-                srcClr = copyColorByValue(app.fgColor)
-            end
-        else
-            srcClr = copyColorByValue(app.fgColor)
-        end
-
+        srcClr = copyColorByValue(app.fgColor)
         adoptAseColor(dlg, srcClr)
     end
 }
@@ -184,24 +169,9 @@ dlg:button {
     focus = false,
     onclick = function()
         local srcClr = nil
-        local activeSprite = app.activeSprite
-
         app.command.SwitchColors()
-        if activeSprite then
-            local args = dlg.data
-            if args.getClrMgmt == "VISUAL" then
-                local oldClrSpc = activeSprite.colorSpace
-                activeSprite:convertColorSpace(sRgbClrSpc)
-                srcClr = copyColorByValue(app.fgColor)
-                activeSprite:convertColorSpace(oldClrSpc)
-            else
-                srcClr = copyColorByValue(app.fgColor)
-            end
-        else
-            srcClr = copyColorByValue(app.fgColor)
-        end
+        srcClr = copyColorByValue(app.fgColor)
         app.command.SwitchColors()
-
         adoptAseColor(dlg, srcClr)
     end
 }
@@ -216,7 +186,6 @@ dlg:shades {
     onclick=function(ev)
         local clr = ev.color
         local noAlpha = clr.alpha < 1
-
         if ev.button == MouseButton.LEFT then
             if noAlpha then
                 app.fgColor = Color(0, 0, 0, 0)
@@ -374,17 +343,6 @@ dlg:slider {
     onchange = function()
         updatePreview(dlg)
     end
-}
-
-dlg:separator{
-    id = "clrMgmtSep",
-    text = "Color Profile" }
-
-dlg:combobox {
-    id = "getClrMgmt",
-    label = "Continuity",
-    option = "NUMERIC",
-    options = { "VISUAL", "NUMERIC" }
 }
 
 dlg:newrow { always = false }
