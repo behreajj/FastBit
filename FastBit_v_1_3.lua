@@ -561,8 +561,8 @@ dlg:button {
         sprite:setPalette(palette)
 
         -- Turn off onion skin loop through tag frames.
-        local docPrefs <const> = app.preferences.document(sprite)
-        local onionSkinPrefs <const> = docPrefs.onionskin
+        local docPrefs = app.preferences.document(sprite)
+        local onionSkinPrefs = docPrefs.onionskin
         onionSkinPrefs.loop_tag = false
 
         -- Set to middle frame, where light is 50%.
