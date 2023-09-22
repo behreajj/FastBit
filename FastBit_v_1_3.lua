@@ -2,6 +2,8 @@
 --https://github.com/WolftrooperNo86/FastBit
 --licensed under GNU General Public License v3.0.
 
+---@param aseColor Color
+---@return Color
 local function copyColorByValue(aseColor)
     return Color(
         aseColor.red,
@@ -10,6 +12,8 @@ local function copyColorByValue(aseColor)
         aseColor.alpha)
 end
 
+---@param aseColor Color
+---@return string
 local function colorToHexWeb(aseColor)
     return string.format("%06x",
         aseColor.red << 0x10
@@ -17,6 +21,9 @@ local function colorToHexWeb(aseColor)
         | aseColor.blue)
 end
 
+---@param cDepth integer
+---@param cOld integer
+---@return integer
 local function expandChannelTo256(cDepth, cOld)
     -- Half the denominator needs to be added to the
     -- numerator in order to properly bias the color.
@@ -34,11 +41,20 @@ local function expandChannelTo256(cDepth, cOld)
     end
 end
 
+---@param rDepth integer
+---@param gDepth integer
+---@param bDepth integer
+---@param aDepth integer
+---@param r integer
+---@param g integer
+---@param b integer
+---@param a integer
+---@param aseColor Color?
+---@return Color
 local function expandColorTo256(
     rDepth, gDepth, bDepth, aDepth,
     r, g, b, a,
     aseColor)
-
     local ase = aseColor or Color(0, 0, 0, 0)
     ase.red = expandChannelTo256(rDepth, r)
     ase.green = expandChannelTo256(gDepth, g)
@@ -47,7 +63,11 @@ local function expandColorTo256(
     return ase
 end
 
-local function saturate(cn, co, mxNew, mxPrev)
+---@param cn integer
+---@param co integer
+---@param mxNew integer
+---@return integer
+local function saturate(cn, co, mxNew)
     -- co & 1 == 0 tests for even or odd, like co % 2.
     if cn > 0 and cn < mxNew and co & 1 == 0 then
         return cn + 1
@@ -56,6 +76,9 @@ local function saturate(cn, co, mxNew, mxPrev)
     end
 end
 
+---@param cDepth integer
+---@param cOld integer
+---@return integer
 local function contract256Channel(cDepth, cOld)
     if cDepth < 2 then
         if cOld < 128 then return 0 else return 1 end
@@ -67,10 +90,21 @@ local function contract256Channel(cDepth, cOld)
     end
 end
 
+---@param rDepth integer
+---@param gDepth integer
+---@param bDepth integer
+---@param aDepth integer
+---@param r integer
+---@param g integer
+---@param b integer
+---@param a integer
+---@return integer
+---@return integer
+---@return integer
+---@return integer
 local function contract256Color(
     rDepth, gDepth, bDepth, aDepth,
     r, g, b, a)
-
     local rNew = contract256Channel(rDepth, r)
     local gNew = contract256Channel(gDepth, g)
     local bNew = contract256Channel(bDepth, b)
@@ -79,19 +113,20 @@ local function contract256Color(
     return rNew, gNew, bNew, aNew
 end
 
+---@param dialog Dialog
 local function updatePreview(dialog)
     local args = dialog.data
 
     local newClr = expandColorTo256(
-        args.redDepth,
-        args.greenDepth,
-        args.blueDepth,
-        args.alphaDepth,
+        args.redDepth --[[@as integer]],
+        args.greenDepth --[[@as integer]],
+        args.blueDepth --[[@as integer]],
+        args.alphaDepth --[[@as integer]],
 
-        args.redChannel,
-        args.greenChannel,
-        args.blueChannel,
-        args.alphaChannel)
+        args.redChannel --[[@as integer]],
+        args.greenChannel --[[@as integer]],
+        args.blueChannel --[[@as integer]],
+        args.alphaChannel --[[@as integer]])
 
     dialog:modify {
         id = "preview",
@@ -104,13 +139,15 @@ local function updatePreview(dialog)
     }
 end
 
+---@param dlg Dialog
+---@param aseColor Color
 local function adoptAseColor(dlg, aseColor)
     local args = dlg.data
     local rNew, gNew, bNew, aNew = contract256Color(
-        args.redDepth,
-        args.greenDepth,
-        args.blueDepth,
-        args.alphaDepth,
+        args.redDepth --[[@as integer]],
+        args.greenDepth --[[@as integer]],
+        args.blueDepth --[[@as integer]],
+        args.alphaDepth --[[@as integer]],
         aseColor.red,
         aseColor.green,
         aseColor.blue,
@@ -124,6 +161,12 @@ local function adoptAseColor(dlg, aseColor)
     updatePreview(dlg)
 end
 
+---@param dialog Dialog
+---@param depth integer
+---@param oldVal integer
+---@param maxPrev integer
+---@param sliderName string
+---@return integer
 local function updateSlider(dialog, depth, oldVal, maxPrev, sliderName)
     local newVal = oldVal
     local newMax = (1 << depth) - 1
@@ -133,7 +176,7 @@ local function updateSlider(dialog, depth, oldVal, maxPrev, sliderName)
     else
         newVal = newMax * oldVal // maxPrev
         if newMax < maxPrev then
-            newVal = saturate(newVal, oldVal, newMax, maxPrev)
+            newVal = saturate(newVal, oldVal, newMax)
         end
     end
 
@@ -147,7 +190,6 @@ local rMaxPrev = 255
 local gMaxPrev = 255
 local bMaxPrev = 255
 local aMaxPrev = 255
-local sRgbClrSpc = ColorSpace { sRGB = true }
 
 local dlg = Dialog { title = "Low Bits" }
 
@@ -183,7 +225,7 @@ dlg:shades {
     label = "Color",
     mode = "pick",
     colors = { Color(255, 255, 255, 255) },
-    onclick=function(ev)
+    onclick = function(ev)
         local clr = ev.color
         local noAlpha = clr.alpha < 1
         if ev.button == MouseButton.LEFT then
@@ -208,14 +250,15 @@ dlg:newrow { always = false }
 
 dlg:entry {
     id = "hexCode",
-    label = "Hex #",
+    label = "Hex: #",
     text = "ffffff",
-    focuse = false
+    focus = false
 }
 
-dlg:separator{
+dlg:separator {
     id = "channelsSep",
-    text = "Depth - Value" }
+    text = "Depth - Value"
+}
 
 -- dlg:check {
 --     id = "uniformDepth",
@@ -237,8 +280,10 @@ dlg:slider {
     onchange = function()
         local args = dlg.data
         rMaxPrev = updateSlider(
-            dlg, args.redDepth,
-            args.redChannel, rMaxPrev,
+            dlg,
+            args.redDepth --[[@as integer]],
+            args.redChannel --[[@as integer]],
+            rMaxPrev,
             "redChannel")
         updatePreview(dlg)
     end
@@ -267,8 +312,10 @@ dlg:slider {
     onchange = function()
         local args = dlg.data
         gMaxPrev = updateSlider(
-            dlg, args.greenDepth,
-            args.greenChannel, gMaxPrev,
+            dlg,
+            args.greenDepth --[[@as integer]],
+            args.greenChannel --[[@as integer]],
+            gMaxPrev,
             "greenChannel")
         updatePreview(dlg)
     end
@@ -297,8 +344,10 @@ dlg:slider {
     onchange = function()
         local args = dlg.data
         bMaxPrev = updateSlider(
-            dlg, args.blueDepth,
-            args.blueChannel, bMaxPrev,
+            dlg,
+            args.blueDepth --[[@as integer]],
+            args.blueChannel --[[@as integer]],
+            bMaxPrev,
             "blueChannel")
         updatePreview(dlg)
     end
@@ -327,8 +376,10 @@ dlg:slider {
     onchange = function()
         local args = dlg.data
         aMaxPrev = updateSlider(
-            dlg, args.alphaDepth,
-            args.alphaChannel, aMaxPrev,
+            dlg,
+            args.alphaDepth --[[@as integer]],
+            args.alphaChannel --[[@as integer]],
+            aMaxPrev,
             "alphaChannel")
         updatePreview(dlg)
     end
@@ -353,22 +404,30 @@ dlg:button {
     focus = false,
     onclick = function()
         local args = dlg.data
-        local rDepth = args.redDepth
-        local gDepth = args.greenDepth
-        local bDepth = args.blueDepth
-        local aDepth = args.alphaDepth
+        local rDepth = args.redDepth --[[@as integer]]
+        local gDepth = args.greenDepth --[[@as integer]]
+        local bDepth = args.blueDepth --[[@as integer]]
+        local aDepth = args.alphaDepth --[[@as integer]]
         local maxDepth = math.max(rDepth, gDepth, bDepth)
         local frameCount = 1 + (1 << maxDepth)
 
         local width = 256
         local height = 256
-        local sprite = Sprite(width, height)
+        local spriteSpec = ImageSpec {
+            width = width,
+            height = height,
+            colorMode = ColorMode.RGB,
+            transparentColor = 0
+        }
+        spriteSpec.colorSpace = ColorSpace { sRGB = true }
+        local sprite = Sprite(spriteSpec)
         local layer = sprite.layers[1]
         layer.name = string.format("Color.Wheel.R%d.G%d.B%d",
             rDepth, gDepth, bDepth)
 
         -- Create frames and cels in a separate transaction.
         -- The first frame and cel already exist.
+        ---@type Cel[]
         local cels = { sprite.cels[1] }
         app.transaction(function()
             for i = 2, frameCount, 1 do
@@ -378,6 +437,7 @@ dlg:button {
             end
         end)
 
+        ---@type table<integer, boolean>
         local clrDict = {}
         app.transaction(function()
             local iToPercent = 1.0 / (frameCount + 1.0)
@@ -394,7 +454,7 @@ dlg:button {
 
             for i = 0, frameCount - 1, 1 do
                 local cel = cels[i + 1]
-                local image = Image(width, height)
+                local image = Image(spriteSpec)
                 local itr = image:pixels()
                 local iPrc = (i + 1) * iToPercent
 
@@ -427,12 +487,12 @@ dlg:button {
                 local grayHex = grayColor.rgbaPixel
                 clrDict[grayHex] = true
 
-                for elm in itr do
-                    local x = elm.x
+                for pixel in itr do
+                    local x = pixel.x
                     local xPrc = x * xToPercent
                     local xSgn = xPrc + xPrc - 1.0
 
-                    local y = elm.y
+                    local y = pixel.y
                     local yPrc = y * yToPercent
                     local ySgn = 1.0 - (yPrc + yPrc)
 
@@ -446,7 +506,8 @@ dlg:button {
                                 h = angleDeg,
                                 s = sat,
                                 l = iPrc,
-                                a = 255 }
+                                a = 255
+                            }
 
                             r = aseColor.red
                             g = aseColor.green
@@ -470,12 +531,12 @@ dlg:button {
 
                             local satHex = newClr.rgbaPixel
                             clrDict[satHex] = true
-                            elm(satHex)
+                            pixel(satHex)
                         else
-                            elm(grayHex)
+                            pixel(grayHex)
                         end
                     else
-                        elm(0x0)
+                        pixel(0x0)
                     end
                 end
 
@@ -484,9 +545,10 @@ dlg:button {
         end)
 
         -- Convert dictionary to array.
+        ---@type Color[]
         local clrArr = {}
         for k, _ in pairs(clrDict) do
-            table.insert(clrArr, Color(k))
+            clrArr[#clrArr + 1] = Color(k)
         end
         local clrsLen = #clrArr
 
@@ -497,6 +559,11 @@ dlg:button {
             palette:setColor(i, clrArr[i])
         end
         sprite:setPalette(palette)
+
+        -- Turn off onion skin loop through tag frames.
+        local docPrefs <const> = app.preferences.document(sprite)
+        local onionSkinPrefs <const> = docPrefs.onionskin
+        onionSkinPrefs.loop_tag = false
 
         -- Set to middle frame, where light is 50%.
         app.activeFrame = 1 + frameCount // 2
